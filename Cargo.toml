@@ -11,5 +11,9 @@ axum = "0.4.4"
 log = "0.4.0"
 env_logger = "0.8.4"
 futures = "0.3"
-serde = {version = "1.0", features = ["derive"]}
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+rbson = "2.0"
+# rbatis (required) default is all-database+runtime-async-std-rustls
+rbatis = { version = "3.0.20" }

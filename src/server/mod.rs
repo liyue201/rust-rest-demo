@@ -1,11 +1,17 @@
+use std::net::SocketAddr;
+use std::sync::Arc;
+
+use axum::AddExtensionLayer;
+use rbatis::rbatis::Rbatis;
+use tokio::signal;
+
 mod user;
 mod route;
 
-use std::net::SocketAddr;
-use tokio::signal;
-
-pub async fn run(port: u16) {
+pub async fn run(rb: Arc<Rbatis>, port: u16) {
     let app = route::setup_router();
+    let app = app.layer(AddExtensionLayer::new(rb));
+
     let addr = SocketAddr::from(([127, 0, 0, 1], port));
 
     info!("listening on {}", addr);
