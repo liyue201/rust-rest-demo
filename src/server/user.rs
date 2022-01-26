@@ -1,15 +1,20 @@
-use axum::{
-    http::*,
-    Json,
-    response::{IntoResponse, Response},
-};
-use serde::Serialize;
+use std::result;
+use axum::http::StatusCode;
+use axum::Json;
+use axum::response::{IntoResponse, Response};
+use serde::{Deserialize, Serialize};
 use serde_json::json;
 
 #[derive(Serialize)]
 pub struct User {
     id: i32,
     username: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct LoginReq {
+    username: String,
+    password: String,
 }
 
 #[derive(Serialize)]
@@ -28,10 +33,12 @@ impl<T> IntoResponse for TResponse<T>
     }
 }
 
-pub async fn login() -> impl IntoResponse {
+pub async fn login(Json(req): Json<LoginReq>) -> impl IntoResponse {
+    info!("login req{:?}", req);
+
     let user = User {
         id: 10,
-        username: String::from("aa"),
+        username: req.username,
     };
 
     TResponse {
