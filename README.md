@@ -1,2 +1,2 @@
 # rust-rest-demo
-A demo of rust rest api server
+A demo for rest api server in rust

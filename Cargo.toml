@@ -12,8 +12,10 @@ log = "0.4.0"
 env_logger = "0.8.4"
 futures = "0.3"
 serde = { version = "1.0", features = ["derive"] }
+serde_repr = "0.1"
 serde_json = "1.0"
-
+lazy_static = "1.4"
 rbson = "2.0"
 # rbatis (required) default is all-database+runtime-async-std-rustls
 rbatis = { version = "3.0.20" }
+
