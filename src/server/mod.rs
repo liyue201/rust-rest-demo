@@ -1,17 +1,17 @@
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::{SocketAddr};
 use std::sync::Arc;
 
 use axum::AddExtensionLayer;
-use rbatis::rbatis::Rbatis;
 use tokio::signal;
+use crate::store::Store;
 
 mod user;
 mod route;
 mod code;
 
-pub async fn run(rb: Arc<Rbatis>, listen_http: &str) {
+pub async fn run(store: Arc<Store>, listen_http: &str) {
     let app = route::setup_router();
-    let app = app.layer(AddExtensionLayer::new(rb));
+    let app = app.layer(AddExtensionLayer::new(store));
 
     let addr: SocketAddr = listen_http.parse().unwrap();
     info!("listening on {}", addr);

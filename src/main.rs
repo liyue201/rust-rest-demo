@@ -12,7 +12,8 @@ use rbatis::rbatis::Rbatis;
 use serde_derive::Deserialize;
 
 #[macro_use]
-pub mod server;
+mod server;
+mod store;
 
 #[derive(Debug, Deserialize)]
 struct Config {
@@ -35,8 +36,10 @@ async fn async_main(c: Config) {
     let rb = Rbatis::new();
     rb.link(c.mysql_url.as_str()).await.expect("rbatis link database fail");
     let rb = Arc::new(rb);
-    let f1 = server::run(rb.clone(), c.listen_http.as_str());
-    let f2 = server::run(rb.clone(), "127.0.0.1:8999");
+    let store = Arc::new(store::Store::new(rb));
+
+    let f1 = server::run(store.clone(), c.listen_http.as_str());
+    let f2 = server::run(store.clone(), "127.0.0.1:8999");
     futures::join!(f1,f2);
 }
 

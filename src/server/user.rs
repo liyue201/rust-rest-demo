@@ -1,32 +1,27 @@
 use result::Result;
-use std::collections::HashMap;
-use std::error::Error;
-use std::fmt::{Display, Formatter};
-use std::ops::Deref;
 use std::result;
 use std::sync::Arc;
 
 use axum::extract::Extension;
-use axum::http::StatusCode;
 use axum::Json;
-use axum::response::{IntoResponse, Response};
-use rbatis::crud::CRUD;
-use rbatis::rbatis::Rbatis;
+use axum::response::IntoResponse;
+use rbatis::Error;
 use serde::{Deserialize, Serialize};
+
 use crate::server::code::*;
-
-
-#[crud_table]
-#[derive(Clone, Debug)]
-pub struct User {
-    pub id: i32,
-    pub username: Option<String>,
-}
+use crate::store::Store;
+use crate::store::user::User;
 
 #[derive(Serialize)]
 pub struct UserData {
-    id: i32,
+    id: i64,
     username: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RegisterReq {
+    username: String,
+    password: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -35,10 +30,38 @@ pub struct LoginReq {
     password: String,
 }
 
-pub async fn login(rb: Extension<Arc<Rbatis>>, Json(req): Json<LoginReq>) -> Result<impl IntoResponse, TError> {
+pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>) -> Result<impl IntoResponse, TError> {
+    info!("register req{:?}", req);
+    let user = User {
+        id: 0,
+        username: Some(req.username),
+        password: Some(req.password),
+    };
+
+    let r = store.create_user(user).await;
+
+    return match r {
+        Ok(u) => {
+            Ok(TResponse {
+                code: TCode::Ok,
+                msg: None,
+                data: Some(UserData {
+                    id: u.id,
+                    username: u.username.unwrap().clone(),
+                }),
+            })
+        }
+        Err(err) => {
+            error!("failed to create user:{}", err);
+            Err(TError::Error(TCode::DbError, "db error".to_owned()))
+        }
+    };
+}
+
+pub async fn login(store: Extension<Arc<Store>>, Json(req): Json<LoginReq>) -> Result<impl IntoResponse, TError> {
     info!("login req{:?}", req);
 
-    let r = rb.fetch_by_column::<Option<User>, _>("username", req.username.clone()).await;
+    let r = store.fetch_user_by_name(req.username.as_str()).await;
 
     return match r {
         Ok(res) => {

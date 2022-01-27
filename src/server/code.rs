@@ -1,21 +1,12 @@
-use result::Result;
 use std::collections::HashMap;
-use std::error::Error;
-use std::fmt::{Display, Formatter};
-use std::ops::Deref;
-use std::result;
-use std::sync::Arc;
-
-use axum::extract::Extension;
 use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
-use lazy_static::lazy_static;
-use rbatis::crud::CRUD;
-use rbatis::rbatis::Rbatis;
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use serde_json::json;
 use serde_repr::Serialize_repr;
+use lazy_static::lazy_static;
+
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, Serialize_repr)]
 #[repr(u8)]
