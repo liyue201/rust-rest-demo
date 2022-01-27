@@ -7,6 +7,7 @@ use tokio::signal;
 
 mod user;
 mod route;
+mod code;
 
 pub async fn run(rb: Arc<Rbatis>, port: u16) {
     let app = route::setup_router();
