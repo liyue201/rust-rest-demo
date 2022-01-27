@@ -1,32 +1,61 @@
 #![allow(dead_code)]
 #[macro_use]
 extern crate log;
-
 #[macro_use]
 extern crate rbatis;
 
 use std::sync::Arc;
 
+use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version};
 use futures::executor::block_on;
 use rbatis::rbatis::Rbatis;
+use serde_derive::Deserialize;
 
 #[macro_use]
 pub mod server;
 
-pub const MYSQL_URL: &'static str = "mysql://fortest:Ky6XRHMFWScBPpbC@122.9.61.5:3306/fortest";
+#[derive(Debug, Deserialize)]
+struct Config {
+    listen_http: String,
+    mysql_url: String,
+}
 
-async fn async_main() {
+impl Config {
+    fn new(file: &str) -> Result<Self, Box<dyn std::error::Error>> {
+        let mut c = config::Config::new();
+        c.set_default("listen_http", "127.0.0.1:8080")?;
+        c.set_default("mysql_url", "mysql://root:123456@127.0.0.1:3306/test")?;
+        c.merge(config::File::with_name(file))?;
+        c.merge(config::Environment::with_prefix("REST_API_SERVER"))?;
+        Ok(c.try_into()?)
+    }
+}
+
+async fn async_main(c: Config) {
     let rb = Rbatis::new();
-    rb.link(MYSQL_URL).await.expect("rbatis link database fail");
+    rb.link(c.mysql_url.as_str()).await.expect("rbatis link database fail");
     let rb = Arc::new(rb);
-    let f1 = server::run(rb.clone(), 3000);
-    let f2 = server::run(rb.clone(), 3001);
+    let f1 = server::run(rb.clone(), c.listen_http.as_str());
+    let f2 = server::run(rb.clone(), "127.0.0.1:8999");
     futures::join!(f1,f2);
 }
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     env_logger::init();
     info!("starting up");
-    block_on(async_main())
+    let opts = app_from_crate!()
+        .arg(
+            clap::Arg::with_name("config")
+                .short("c")
+                .long("config")
+                .help("Configuration file path")
+                .takes_value(true)
+                .default_value("./config/app.yaml"),
+        )
+        .get_matches();
+    let cfg = Config::new(opts.value_of("config").unwrap())?;
+
+    block_on(async_main(cfg));
+    Ok(())
 }

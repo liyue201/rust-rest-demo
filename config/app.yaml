@@ -1,0 +1,4 @@
+listen_http: 0.0.0.0:3000
+mysql_url: mysql://fortest:Ky6XRHMFWScBPpbC@122.9.61.5:3306/fortest
+
+

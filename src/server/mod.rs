@@ -1,4 +1,4 @@
-use std::net::SocketAddr;
+use std::net::{Ipv4Addr, SocketAddr};
 use std::sync::Arc;
 
 use axum::AddExtensionLayer;
@@ -9,12 +9,11 @@ mod user;
 mod route;
 mod code;
 
-pub async fn run(rb: Arc<Rbatis>, port: u16) {
+pub async fn run(rb: Arc<Rbatis>, listen_http: &str) {
     let app = route::setup_router();
     let app = app.layer(AddExtensionLayer::new(rb));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], port));
-
+    let addr: SocketAddr = listen_http.parse().unwrap();
     info!("listening on {}", addr);
 
     axum::Server::bind(&addr)
