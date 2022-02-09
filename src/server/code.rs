@@ -1,12 +1,12 @@
 use std::collections::HashMap;
+
 use axum::http::StatusCode;
 use axum::Json;
 use axum::response::{IntoResponse, Response};
+use lazy_static::lazy_static;
 use serde::Serialize;
 use serde_json::json;
 use serde_repr::Serialize_repr;
-use lazy_static::lazy_static;
-
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, Serialize_repr)]
 #[repr(u8)]
@@ -36,7 +36,7 @@ pub enum TError {
 }
 
 #[derive(Serialize)]
-pub struct TResponse<T> {
+pub struct TResponse<T: Serialize> {
     pub code: TCode,
     pub msg: Option<String>,
     pub data: Option<T>,

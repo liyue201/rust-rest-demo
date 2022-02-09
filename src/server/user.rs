@@ -5,7 +5,6 @@ use std::sync::Arc;
 use axum::extract::Extension;
 use axum::Json;
 use axum::response::IntoResponse;
-use rbatis::Error;
 use serde::{Deserialize, Serialize};
 
 use crate::server::code::*;
