@@ -1,14 +1,13 @@
 pub(crate) mod user;
 
-use std::sync::Arc;
 use rbatis::rbatis::Rbatis;
 
 pub struct Store {
-    rb: Arc<Rbatis>,
+    rb: Rbatis,
 }
 
 impl Store {
-    pub fn new(rb: Arc<Rbatis>) -> Self {
+    pub fn new(rb: Rbatis) -> Self {
         Store {
             rb
         }

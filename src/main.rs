@@ -35,7 +35,6 @@ impl Config {
 async fn async_main(c: Config) {
     let rb = Rbatis::new();
     rb.link(c.mysql_url.as_str()).await.expect("rbatis link database fail");
-    let rb = Arc::new(rb);
     let store = Arc::new(store::Store::new(rb));
 
     let f1 = server::run(store.clone(), c.listen_http.as_str());
