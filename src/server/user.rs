@@ -1,17 +1,14 @@
-use result::Result;
-use std::result;
 use std::sync::Arc;
 
 use axum::extract::Extension;
 use axum::Json;
-use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
 
 use crate::server::code::*;
 use crate::store::Store;
 use crate::store::user::User;
 
-#[derive(Serialize)]
+#[derive(Debug, Serialize)]
 pub struct UserData {
     id: i64,
     username: String,
@@ -29,7 +26,7 @@ pub struct LoginReq {
     password: String,
 }
 
-pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>) -> Result<impl IntoResponse, TError> {
+pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>) -> TResponse<UserData> {
     info!("register req{:?}", req);
     let user = User {
         id: 0,
@@ -41,23 +38,19 @@ pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>
 
     return match r {
         Ok(u) => {
-            Ok(TResponse {
-                code: TCode::Ok,
-                msg: None,
-                data: Some(UserData {
-                    id: u.id,
-                    username: u.username.unwrap().clone(),
-                }),
+            TResponse::Ok(UserData {
+                id: u.id,
+                username: u.username.unwrap().clone(),
             })
         }
         Err(err) => {
             error!("failed to create user:{}", err);
-            Err(TError::Error(TCode::DbError, "db error".to_owned()))
+            TResponse::Err(TCode::DbError, "db error".to_owned())
         }
     };
 }
 
-pub async fn login(store: Extension<Arc<Store>>, Json(req): Json<LoginReq>) -> Result<impl IntoResponse, TError> {
+pub async fn login(store: Extension<Arc<Store>>, Json(req): Json<LoginReq>) -> TResponse<UserData> {
     info!("login req{:?}", req);
 
     let r = store.fetch_user_by_name(req.username.as_str()).await;
@@ -66,23 +59,19 @@ pub async fn login(store: Extension<Arc<Store>>, Json(req): Json<LoginReq>) -> R
         Ok(res) => {
             match res {
                 Some(user) => {
-                    Ok(TResponse {
-                        code: TCode::Ok,
-                        msg: None,
-                        data: Some(UserData {
-                            id: user.id,
-                            username: user.username.unwrap().clone(),
-                        }),
+                    TResponse::Ok(UserData {
+                        id: user.id,
+                        username: user.username.unwrap().clone(),
                     })
                 }
                 None => {
-                    Err(TError::Error(TCode::UsernameNotExist, TCODE_MESSAGE.get(&TCode::UsernameNotExist).unwrap().to_string()))
+                    TResponse::Err(TCode::UsernameNotExist, TCODE_MESSAGE.get(&TCode::UsernameNotExist).unwrap().to_string())
                 }
             }
         }
         Err(err) => {
             error!("failed to get user:{}", err);
-            Err(TError::Error(TCode::DbError, "db error".to_owned()))
+            TResponse::Err(TCode::DbError, "db error".to_owned())
         }
     };
 }

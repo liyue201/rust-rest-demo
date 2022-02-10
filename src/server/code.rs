@@ -30,42 +30,41 @@ lazy_static! {
     };
 }
 
-#[derive(Debug)]
-pub enum TError {
-    Error(TCode, String),
-}
-
 #[derive(Serialize)]
-pub struct TResponse<T: Serialize> {
+pub struct ComResponse<T: Serialize> {
     pub code: TCode,
     pub msg: Option<String>,
     pub data: Option<T>,
 }
 
-impl<T> IntoResponse for TResponse<T>
-    where
-        T: Serialize,
-{
-    fn into_response(self) -> Response {
-        let body = Json(json!(self));
-        (StatusCode::from_u16(200).unwrap(), body).into_response()
-    }
+#[derive(Debug)]
+pub enum TResponse<T: Serialize> {
+    Ok(T),
+    Err(TCode, String),
 }
 
-impl IntoResponse for TError {
+impl<T: Serialize> IntoResponse for TResponse<T>
+{
     fn into_response(self) -> Response {
-        let mut resp = TResponse {
-            code: TCode::UnknownError,
-            msg: Some(TCODE_MESSAGE.get(&TCode::UnknownError).unwrap().to_string()),
-            data: Some(()),
-        };
         match self {
-            TError::Error(code, msg) => {
-                resp.code = code;
-                resp.msg = Some(msg);
+            TResponse::Ok(data) => {
+                let resp = ComResponse {
+                    code: TCode::Ok,
+                    msg: Some(TCODE_MESSAGE.get(&TCode::Ok).unwrap().to_string()),
+                    data: Some(data),
+                };
+                let body = Json(json!(resp));
+                (StatusCode::from_u16(200).unwrap(), body).into_response()
+            }
+            TResponse::Err(code, msg) => {
+                let resp = ComResponse {
+                    code,
+                    msg: Some(msg),
+                    data: Some(()),
+                };
+                let body = Json(json!(resp));
+                (StatusCode::from_u16(200).unwrap(), body).into_response()
             }
         }
-        let body = Json(json!(resp));
-        (StatusCode::from_u16(200).unwrap(), body).into_response()
     }
 }
