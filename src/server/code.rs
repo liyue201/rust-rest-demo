@@ -46,25 +46,23 @@ pub enum TResponse<T: Serialize> {
 impl<T: Serialize> IntoResponse for TResponse<T>
 {
     fn into_response(self) -> Response {
-        match self {
+        let resp = match self {
             TResponse::Ok(data) => {
-                let resp = ComResponse {
+                ComResponse {
                     code: TCode::Ok,
                     msg: Some(TCODE_MESSAGE.get(&TCode::Ok).unwrap().to_string()),
                     data: Some(data),
-                };
-                let body = Json(json!(resp));
-                (StatusCode::from_u16(200).unwrap(), body).into_response()
+                }
             }
             TResponse::Err(code, msg) => {
-                let resp = ComResponse {
+                ComResponse {
                     code,
                     msg: Some(msg),
-                    data: Some(()),
-                };
-                let body = Json(json!(resp));
-                (StatusCode::from_u16(200).unwrap(), body).into_response()
+                    data: None,
+                }
             }
-        }
+        };
+        let body = Json(json!(resp));
+        (StatusCode::from_u16(200).unwrap(), body).into_response()
     }
 }
