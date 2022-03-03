@@ -2,6 +2,7 @@ use std::sync::Arc;
 
 use axum::extract::Extension;
 use axum::Json;
+use axum::response::IntoResponse;
 use serde::{Deserialize, Serialize};
 
 use crate::server::code::*;
@@ -26,7 +27,7 @@ pub struct LoginReq {
     password: String,
 }
 
-pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>) -> TResponse<UserData> {
+pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>) -> impl IntoResponse {
     info!("register req{:?}", req);
     let user = User {
         id: 0,
@@ -36,43 +37,39 @@ pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>
 
     let r = store.create_user(user).await;
 
-    return match r {
-        Ok(u) => {
-            TResponse::Ok(UserData {
+    r.map(|u| {
+        TSuccess {
+            data: UserData {
                 id: u.id,
                 username: u.username.unwrap().clone(),
-            })
+            }
         }
-        Err(err) => {
-            error!("failed to create user:{}", err);
-            TResponse::Err(TCode::DbError, "db error".to_owned())
-        }
-    };
+    }).map_err(|err| {
+        error!("failed to create user:{}", err);
+        TError { code: TCode::DbError, msg: Some("db error".to_owned()) }
+    })
 }
 
-pub async fn login(store: Extension<Arc<Store>>, Json(req): Json<LoginReq>) -> TResponse<UserData> {
+pub async fn login(store: Extension<Arc<Store>>, Json(req): Json<LoginReq>) -> impl IntoResponse {
     info!("login req{:?}", req);
 
     let r = store.fetch_user_by_name(req.username.as_str()).await;
 
-    return match r {
-        Ok(res) => {
-            match res {
-                Some(user) => {
-                    TResponse::Ok(UserData {
-                        id: user.id,
-                        username: user.username.unwrap().clone(),
-                    })
-                }
-                None => {
-                    TResponse::Err(TCode::UsernameNotExist, TCODE_MESSAGE.get(&TCode::UsernameNotExist).unwrap().to_string())
+    r.map(|res| {
+        res.map(|u| {
+            TSuccess {
+                data: UserData {
+                    id: u.id,
+                    username: u.username.unwrap().clone(),
                 }
             }
-        }
-        Err(err) => {
-            error!("failed to get user:{}", err);
-            TResponse::Err(TCode::DbError, "db error".to_owned())
-        }
-    };
+        }).ok_or(TError {
+            code: TCode::UsernameNotExist,
+            msg: Some(TCODE_MESSAGE.get(&TCode::UsernameNotExist).unwrap().to_string()),
+        })
+    }).map_err(|err| {
+        error!("failed to get user:{}", err);
+        TError { code: TCode::DbError, msg: Some("db error".to_owned()) }
+    })
 }
 

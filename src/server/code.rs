@@ -38,28 +38,37 @@ pub struct ComResponse<T: Serialize> {
 }
 
 #[derive(Debug)]
-pub enum TResponse<T: Serialize> {
-    Ok(T),
-    Err(TCode, String),
+pub struct TSuccess<T: Serialize> {
+    pub data: T,
 }
 
-impl<T: Serialize> IntoResponse for TResponse<T>
+impl<T: Serialize> IntoResponse for TSuccess<T>
 {
     fn into_response(self) -> Response {
-        let resp = match self {
-            TResponse::Ok(data) => {
-                ComResponse {
-                    code: TCode::Ok,
-                    msg: Some(TCODE_MESSAGE.get(&TCode::Ok).unwrap().to_string()),
-                    data: Some(data),
-                }
-            }
-            TResponse::Err(code, msg) => {
-                ComResponse {
-                    code,
-                    msg: Some(msg),
-                    data: None,
-                }
+        let resp = ComResponse {
+            code: TCode::Ok,
+            msg: Some(TCODE_MESSAGE.get(&TCode::Ok).unwrap().to_string()),
+            data: Some(self.data),
+        };
+        let body = Json(json!(resp));
+        (StatusCode::from_u16(200).unwrap(), body).into_response()
+    }
+}
+
+#[derive(Debug)]
+pub struct TError {
+    pub code: TCode,
+    pub msg: Option<String>,
+}
+
+impl IntoResponse for TError
+{
+    fn into_response(self) -> Response {
+        let resp: ComResponse<i32> = {
+            ComResponse {
+                code: self.code,
+                msg: self.msg,
+                data: None,
             }
         };
         let body = Json(json!(resp));
