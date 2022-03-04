@@ -1,7 +1,7 @@
 use rbatis::crud::CRUD;
 use rbatis::Error;
 
-use crate::store::Store;
+use super::Store;
 
 #[crud_table]
 #[derive(Clone, Debug)]

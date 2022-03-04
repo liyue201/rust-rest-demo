@@ -11,7 +11,6 @@ use futures::executor::block_on;
 use rbatis::rbatis::Rbatis;
 use serde_derive::Deserialize;
 
-#[macro_use]
 mod server;
 mod store;
 

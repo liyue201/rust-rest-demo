@@ -3,7 +3,7 @@ use axum::{
     routing::{get, post},
 };
 
-use crate::server::user::{login, register};
+use super::user::{login, register};
 
 pub fn setup_router() -> Router {
     Router::new()
