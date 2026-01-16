@@ -10,7 +10,7 @@ use serde_repr::Serialize_repr;
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug, Hash, Serialize_repr)]
 #[repr(u8)]
-pub enum TCode {
+pub enum Code {
     Ok = 0,
     UnknownError = 1,
     UsernameNotExist = 2,
@@ -19,35 +19,35 @@ pub enum TCode {
 }
 
 lazy_static! {
-    pub static ref TCODE_MESSAGE: HashMap<TCode, &'static str> = {
+    pub static ref TCODE_MESSAGE: HashMap<Code, &'static str> = {
         let mut m = HashMap::new();
-        m.insert(TCode::Ok, "Ok");
-        m.insert(TCode::UnknownError, "Unknown error");
-        m.insert(TCode::UsernameNotExist, "Username not exist");
-        m.insert(TCode::PasswordError, "Password error");
-        m.insert(TCode::DbError, "Db error");
+        m.insert(Code::Ok, "Ok");
+        m.insert(Code::UnknownError, "Unknown error");
+        m.insert(Code::UsernameNotExist, "Username not exist");
+        m.insert(Code::PasswordError, "Password error");
+        m.insert(Code::DbError, "Db error");
         m
     };
 }
 
 #[derive(Serialize)]
 pub struct ComResponse<T: Serialize> {
-    pub code: TCode,
+    pub code: Code,
     pub msg: Option<String>,
     pub data: Option<T>,
 }
 
 #[derive(Debug)]
-pub struct TSuccess<T: Serialize> {
+pub struct Success<T: Serialize> {
     pub data: T,
 }
 
-impl<T: Serialize> IntoResponse for TSuccess<T>
+impl<T: Serialize> IntoResponse for Success<T>
 {
     fn into_response(self) -> Response {
         let resp = ComResponse {
-            code: TCode::Ok,
-            msg: Some(TCODE_MESSAGE.get(&TCode::Ok).unwrap().to_string()),
+            code: Code::Ok,
+            msg: Some(TCODE_MESSAGE.get(&Code::Ok).unwrap().to_string()),
             data: Some(self.data),
         };
         let body = Json(json!(resp));
@@ -56,12 +56,12 @@ impl<T: Serialize> IntoResponse for TSuccess<T>
 }
 
 #[derive(Debug)]
-pub struct TError {
-    pub code: TCode,
+pub struct Error {
+    pub code: Code,
     pub msg: Option<String>,
 }
 
-impl IntoResponse for TError
+impl IntoResponse for Error
 {
     fn into_response(self) -> Response {
         let resp: ComResponse<i32> = {

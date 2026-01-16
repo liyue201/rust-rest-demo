@@ -38,7 +38,7 @@ pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>
     let r = store.create_user(user).await;
 
     r.map(|u| {
-        TSuccess {
+        Success {
             data: UserData {
                 id: u.id,
                 username: u.username.unwrap().clone(),
@@ -46,7 +46,7 @@ pub async fn register(store: Extension<Arc<Store>>, Json(req): Json<RegisterReq>
         }
     }).map_err(|err| {
         error!("failed to create user:{}", err);
-        TError { code: TCode::DbError, msg: Some("db error".to_owned()) }
+        Error { code: Code::DbError, msg: Some("db error".to_owned()) }
     })
 }
 
@@ -57,19 +57,19 @@ pub async fn login(store: Extension<Arc<Store>>, Json(req): Json<LoginReq>) -> i
 
     r.map(|res| {
         res.map(|u| {
-            TSuccess {
+            Success {
                 data: UserData {
                     id: u.id,
                     username: u.username.unwrap().clone(),
                 }
             }
-        }).ok_or(TError {
-            code: TCode::UsernameNotExist,
-            msg: Some(TCODE_MESSAGE.get(&TCode::UsernameNotExist).unwrap().to_string()),
+        }).ok_or(Error {
+            code: Code::UsernameNotExist,
+            msg: Some(TCODE_MESSAGE.get(&Code::UsernameNotExist).unwrap().to_string()),
         })
     }).map_err(|err| {
         error!("failed to get user:{}", err);
-        TError { code: TCode::DbError, msg: Some("db error".to_owned()) }
+        Error { code: Code::DbError, msg: Some("db error".to_owned()) }
     })
 }
 
